@@ -86,7 +86,7 @@ public class LocalFile {
 
 	// creates an empty file and confirms that it exists
 	public boolean create() {
-		if (!this.file.exists()) {
+		if (!this.exists()) {
 			try {
 				if (!this.file.createNewFile()) {
 					return false;
@@ -101,9 +101,9 @@ public class LocalFile {
 
 	// deletes a file and confirms that it has been deleted
 	public boolean delete() {
-		if (this.file.exists()) {
+		if (this.exists()) {
 			this.file.delete();
-			if (this.file.exists()) {
+			if (this.exists()) {
 				return false;
 			}
 		}
@@ -163,10 +163,7 @@ public class LocalFile {
 
 	}
 
-	// copies a file to a new name and new directory
-
-	/*
-	 * *************************************************** 
+	/* *************************************************** 
 	 * ******** WRITING TO AND READING FROM A FILE *******
 	 * **************************************************/
 
@@ -174,7 +171,7 @@ public class LocalFile {
 		FileWriter fw;
 		try {
 			fw = new FileWriter(this.file);
-			if (!this.file.exists()) {
+			if (!this.exists()) {
 				this.create();
 			}
 			fw.write(input);
@@ -185,19 +182,28 @@ public class LocalFile {
 			return false;
 		}
 	}
+	
+	public boolean append(String input) {
+		String[] existingLines = this.getAll();
+		if (existingLines.length > 0) {
+			String formattedLines = "";
+			for (int i = 0; i < existingLines.length; i++) {
+				formattedLines += existingLines[i] + "\n";
+			}
+			input = formattedLines + input;
+		}
+		return this.write(input);
+	}
 
-	public String getSingleLine(String contains) {
-		// open the file
-		BufferedReader br;
-		try {
-			br = new BufferedReader(new FileReader(this.file.getPath()));
-			String line = br.readLine();
-			while (line != null) {
+	public String getLine(String contains) {
+		try (BufferedReader br = new BufferedReader(new FileReader(this.file.getPath()))) {
+			String line;
+			while ((line = br.readLine()) != null) {
 				if (line.contains(contains)) {
-					br.close();
 					return line;
 				}
 			}
+			br.close();
 		} catch (IOException e) {
 			// log the error
 		}
@@ -206,11 +212,9 @@ public class LocalFile {
 
 	public String[] getAll() {
 		ArrayList<String> content = new ArrayList<String>();
-		BufferedReader br;
-		try {
-			br = new BufferedReader(new FileReader(this.file.getPath()));
-			String line = br.readLine();
-			while (line != null) {
+		try (BufferedReader br = new BufferedReader(new FileReader(this.file.getPath()))) {
+			String line;
+			while ((line = br.readLine()) != null) {
 				content.add(line);
 			}
 			br.close();
@@ -218,6 +222,14 @@ public class LocalFile {
 			// log errors here
 		}
 		return content.toArray(new String[content.size()]);
+	}
+	
+	/* *************************************************** 
+	 * ************ MISC FUNCTIONS & UTILITIES ***********
+	 * **************************************************/
+	
+	public boolean exists() {
+		return this.file.exists();
 	}
 
 }
